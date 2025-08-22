@@ -1,29 +1,6 @@
 // import * as CodeMirror from "./CodeMirror";
 // import {getCookie, setCookie} from "./cookie";
-export const escaper = encodeURIComponent || escape;
-export const decoder = decodeURIComponent || unescape;
 
-export function setCookie(cname: string, cvalue: string, exdays: number): void {
-    cvalue = escaper(cvalue);
-    const d = new Date();
-    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-    const expires = 'expires=' + d.toUTCString();
-    document.cookie = cname + '=' + cvalue + '; ' + expires + "; path=/";
-}
-
-export function getCookie(cname: string): string {
-    const name = cname + '=';
-    const ca:string[] = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c:string = ca[i]!;
-        while (c.charAt(0) == ' ')
-			c = c.substring(1);
-        if (c.indexOf(name) === 0) {
-            return decoder(c.substring(name.length, c.length));
-        }
-    }
-    return '';
-}
 
 window.addEventListener('load', function(){
 	console.log("Compiler loaded");
@@ -80,6 +57,9 @@ window.addEventListener('load', function(){
 		let code = getCookie('code');
 		if(code)
 			code_editor.setValue(code);
+		let autosave_cookie = getCookie('autosave');
+		if(autosave_cookie)
+			autosave.checked = (autosave_cookie === 'true');
 	}
 
 	//@ts-ignore
@@ -87,6 +67,7 @@ window.addEventListener('load', function(){
 		if(autosave.checked) savecode();
 	}
 	autosave.onchange = function(e){
+		setCookie('autosave', autosave.checked ? 'true' : 'false', 365);
 		if(autosave.checked)
 			code_editor.on('change', handle_needsave);
 		else

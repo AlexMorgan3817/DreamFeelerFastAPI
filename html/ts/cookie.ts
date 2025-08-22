@@ -1,7 +1,7 @@
-export const escaper = encodeURIComponent || escape;
-export const decoder = decodeURIComponent || unescape;
+const escaper = encodeURIComponent || escape;
+const decoder = decodeURIComponent || unescape;
 
-export function setCookie(cname: string, cvalue: string, exdays: number): void {
+function setCookie(cname: string, cvalue: string | number | boolean, exdays: number): void {
     cvalue = escaper(cvalue);
     const d = new Date();
     d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
@@ -9,7 +9,7 @@ export function setCookie(cname: string, cvalue: string, exdays: number): void {
     document.cookie = cname + '=' + cvalue + '; ' + expires + "; path=/";
 }
 
-export function getCookie(cname: string): string {
+function getCookie(cname: string): string {
     const name = cname + '=';
     const ca:string[] = document.cookie.split(';');
     for (let i = 0; i < ca.length; i++) {

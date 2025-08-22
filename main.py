@@ -108,7 +108,6 @@ async def compile_code(websocket: WebSocket, code: str, dataDir:str="compile_dat
 		return
 	for line in p.stdout:
 		await websocket.send_text(json.dumps({"logdata": line.decode("utf-8")}))
-	print(code)
 	await websocket.send_text(json.dumps({"logdata": "\nRunning program.\n\n"}))
 	# time.sleep(1)
 	# p.terminate()
@@ -124,16 +123,21 @@ async def compile_code(websocket: WebSocket, code: str, dataDir:str="compile_dat
 			command = 'dreamdaemon ' + command
 		print(f"Executing: {command}")
 		p = Popen(command, stdout = PIPE, stderr = STDOUT, shell=False)
+		# for line in p.stdout:
+		# 	if line == "//STOP":
+		# 		break
+		# 	await websocket.send_text(json.dumps({"logdata": line.decode("utf-8")}))
 		print(f"Awaiting to finish: {p}")
-		time.sleep(1)
 		print("Stop process")
+		time.sleep(1)
 		p.terminate()
 		PortsPool.release_port(port)
 		try:
 			with open(coreFilePath + ".log", 'r') as logfile:
 				await websocket.send_text(json.dumps({"logdata": logfile.read()}))
-		except IOError:
+		except IOError as e:
 			await websocket.send_text(json.dumps({"logdata": "Error in output has occured."}))
+			raise e
 	except Exception as e:
 		await websocket.send_text(json.dumps({"logdata": "Execution error."}))
 		raise e
