@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block head %}
+    <script type='module' src="/static/js/compiler_hooks.js"></script>
+{% endblock %}
+{% block content %}
+    <form id="compiler_form" onsubmit="return false;">
+        <!-- <input type="text" id="SaveTitle" placeholder="Name your Dream." maxlength="20"> -->
+        <div class="controls"></div>
+            <input type="submit" value="Save" id="SaveButton" title="Shortcut: CTRL + S">
+            <input type="submit" value="Compile" id="compileButton" title="Shortcut: CTRL + K">
+            <input type="checkbox" checked id="autosave" name='Autosave'>
+            <label>Autosave</label>
+        </div>
+        <div class="IO">
+            <textarea class="code_editor" id="code_editor" placeholder="Your dream." maxlength="10000"></textarea>
+            <textarea id="compile_output" disabled></textarea>
+        </div>
+    </form>
+{% endblock %}

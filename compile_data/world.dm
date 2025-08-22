@@ -1,0 +1,2 @@
+/world/New()
+	main()

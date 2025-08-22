@@ -1,0 +1,109 @@
+// import * as CodeMirror from "./CodeMirror";
+// import {getCookie, setCookie} from "./cookie";
+export const escaper = encodeURIComponent || escape;
+export const decoder = decodeURIComponent || unescape;
+
+export function setCookie(cname: string, cvalue: string, exdays: number): void {
+    cvalue = escaper(cvalue);
+    const d = new Date();
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    const expires = 'expires=' + d.toUTCString();
+    document.cookie = cname + '=' + cvalue + '; ' + expires + "; path=/";
+}
+
+export function getCookie(cname: string): string {
+    const name = cname + '=';
+    const ca:string[] = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c:string = ca[i]!;
+        while (c.charAt(0) == ' ')
+			c = c.substring(1);
+        if (c.indexOf(name) === 0) {
+            return decoder(c.substring(name.length, c.length));
+        }
+    }
+    return '';
+}
+
+window.addEventListener('load', function(){
+	console.log("Compiler loaded");
+	const compilatorSocket = new WebSocket(
+		(location.protocol === 'https:' ? 'wss://' : 'ws://') +
+		window.location.host + '/ws/compile/'
+	);
+	//@ts-ignore
+	const compileButton  : HTMLButtonElement = document.getElementById('compileButton');//@ts-ignore
+	const SaveButton     : HTMLButtonElement = document.getElementById('SaveButton');//@ts-ignore
+	const editor: HTMLTextAreaElement = document.getElementById('code_editor');//@ts-ignore
+	const autosave: HTMLInputElement = document.getElementById('autosave');//@ts-ignore
+	const code_editor = CodeMirror.fromTextArea(editor, {
+		lineNumbers: true,//@ts-ignore
+		mode: { name: "clike", mode: "csharp" },
+		theme: 'material-darker',
+		tabSize: 4,
+		indentUnit: 4,
+		indentWithTabs: true,
+		lineWrapping: true
+	});//@ts-ignore
+	const compile_output : HTMLTextAreaElement = document.getElementById('compile_output');
+	function LockButtons(){
+		compileButton.disabled = true;
+		SaveButton.disabled = true;
+	}
+	function UnlockButtons(){
+		compileButton.disabled = false;
+		SaveButton.disabled = false;
+	}
+	compilatorSocket.onclose = function(e){
+		console.error('Compilation socket closed unexpectedly');
+		LockButtons();
+	};
+	compilatorSocket.onmessage = function(e){
+		const data = JSON.parse(e.data);
+		if(data.logdata) compile_output.value += data.logdata;
+		if(data.unlock) UnlockButtons();
+	};
+	function savecode(code = code_editor.getValue()){
+		setCookie('code', code, 365);
+	}
+	compileButton.onclick = function(e){
+		compile_output.value = "";
+		let code = code_editor.getValue();
+		if(autosave.checked) savecode(code);
+		LockButtons();
+		compilatorSocket.send(JSON.stringify({'data_to_compile': code}));
+	};
+	SaveButton.onclick = function(e){
+		savecode();
+	};
+	if(document.cookie){
+		let code = getCookie('code');
+		if(code)
+			code_editor.setValue(code);
+	}
+
+	//@ts-ignore
+	function handle_needsave(e){
+		if(autosave.checked) savecode();
+	}
+	autosave.onchange = function(e){
+		if(autosave.checked)
+			code_editor.on('change', handle_needsave);
+		else
+			code_editor.off('change', handle_needsave);
+	}
+	if(autosave.checked)
+		code_editor.on('change', handle_needsave);
+
+	// code_editor.addEventListener('keydown', function(e){
+	//	if(e.ctrlKey)
+	//		if(e.key === 'k'){
+	//		    e.preventDefault();
+	//		    compileButton.click();
+	//		}
+	//		if(e.key === 's'){
+	//		    e.preventDefault();
+	//		    SaveButton.click();
+	//		}
+	// });
+});
